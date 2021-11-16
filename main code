@@ -6,7 +6,7 @@ int ph,maxSize;
 struct SG
 {
     int value;
-    struct SG *right,*left,*sibling,*parent;///////////
+    struct SG *right,*left,*sibling,*parent;
 };
 
 int max(int a,int b)
