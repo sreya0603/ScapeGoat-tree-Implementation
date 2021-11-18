@@ -1,266 +1,305 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include<bits/stdc++.h>
+using namespace std;
 
-int ph,maxSize;
-struct SG
+static int const log32 (int n)
 {
-    int value;
-    struct SG *right,*left,*sibling,*parent;
+    double const log23 = 2.4663034623764317;
+    return (int) ceil (log23 * log (n));
+}
+
+class Node
+{
+public:
+    Node * left, *right, *parent;
+    float value;
+    Node ()
+    {
+        value = 0;
+        left = right = parent = NULL;
+    }
+    Node (float v)
+    {
+        value = v;
+        left = right = parent = NULL;
+    }
 };
 
-int max(int a,int b)
+int storeInArray (Node * ptr, Node * arr[], int i)
 {
-    if(a>=b)
-    return a;
+    if (ptr == NULL)
+        return i;
+
+    i = storeInArray (ptr->left, arr, i);
+    arr[i++] = ptr;
+    return storeInArray (ptr->right, arr, i);
+}
+
+class SGTree
+{
+private:
+    Node * root;
+    int n;
+public:
+    void inorder (Node *);
+    int size (Node *);
+    bool insert (float x);
+    void rebuildTree (Node * u);
+    SGTree ()       { root = NULL; n = 0; }
+    void inorder () { inorder (root); }
+
+    Node *buildBalancedFromArray (Node ** a, int i, int n);
+
+    int BSTInsertAndFindDepth (Node * u);
+    int search (float y);
+    Node *delet (float z);
+};
+
+void SGTree::inorder (Node * node)
+{
+    if (node != NULL)
+    {
+        inorder (node->left);
+        cout << node->value << " ";
+        inorder (node->right);
+    }
+}
+
+int SGTree::size (Node * node)
+{
+    if (node == NULL)
+        return 0;
+    return 1 + size (node->left) + size (node->right);
+}
+
+bool SGTree::insert(float x)
+{
+    Node *node = new Node(x);
+  
+    int h = BSTInsertAndFindDepth(node);
+  
+    if (h > log32(n))
+    {
+        Node *p = node->parent;
+        while (3*size(p) <= 2*size(p->parent))
+            p = p->parent;
+        rebuildTree(p->parent);
+    }
+
+    return h >= 0;
+}
+
+void SGTree::rebuildTree(Node *u)
+{
+    int n = size(u);
+    Node *p = u->parent;
+    Node **a = new Node* [n];
+    storeInArray(u, a, 0);
+    if (p == NULL)
+    {
+        root = buildBalancedFromArray(a, 0, n);
+        root->parent = NULL;
+    }
+    else if (p->right == u)
+    {
+        p->right = buildBalancedFromArray(a, 0, n);
+        p->right->parent = p;
+    }
     else
-    return b;
-}
-
-int size(struct SG *t)
-{
-    if(t==NULL)
-      return 0;
-    else 
-      return (1+size(t->left)+size(t->right));
-}
-
-int height(struct SG *t)
-{
-    if(t==NULL)
-      return 0;
-    else 
-      return max(size(t->left),size(t->right))+1;
-}
-struct SG* FindScapegoat(struct SG *t)
-{
-    int totalSize;
-    int Size = 1;
-    int height = 0;
-    while (t->parent){
-     height = height + 1;
-     totalSize = 1 + Size + size(t->sibling);
-     if(height > (log(totalSize))/(log(ph)))
-       return t->parent;
-    t= t->parent;
-    Size=totalSize;
-    }
-}
-struct SG* search(struct SG *t,int num)
-{
-    while(t!=NULL)
     {
-        if(num==(t)->value)
-        return t;
-        else if (num<=(t)->left->value)
-        return search((t)->left,num);
-        else
-        return search((t)->left,num);
+        p->left = buildBalancedFromArray(a, 0, n);
+        p->left->parent = p;
     }
 }
 
-struct SG* FlattenTree(struct SG *t,struct SG *head)
+Node * SGTree::buildBalancedFromArray(Node **a,int i, int n)
 {
-    if(t==NULL)
-      return head;
-    t->right = FlattenTree(t->right,head);
-    return FlattenTree(t->left,t);
+    if (n== 0)
+        return NULL;
+    int m = n / 2;
+  
+    a[i+m]->left = buildBalancedFromArray(a, i, m);
+  
+    if (a[i+m]->left != NULL)
+        a[i+m]->left->parent = a[i+m];
+  
+    a[i+m]->right =
+         buildBalancedFromArray(a, i+m+1, n-m-1);
+    if (a[i+m]->right != NULL)
+        a[i+m]->right->parent = a[i+m];
+  
+    return a[i+m];
 }
 
-struct SG* BuildHeightBalancedTree(int size, struct SG *head)
+int SGTree::BSTInsertAndFindDepth(Node *u)
 {
-    struct SG *root,*last;
-    if(size==1) 
-    return head;
-    else if(size==2) 
+    Node *w = root;
+    if (w == NULL)
     {
-       (head->right)->left=head;
-       return head->right;
+        root = u;
+        n++;
+        return 0;
     }
-    root = BuildHeightBalancedTree(((size-1)/2),head->right);
-    last = BuildHeightBalancedTree(((size-1)/2),root->right);
-    root->left = head;
-    return last;
-
-}
-struct SG* RebuildTree(int size,struct SG *scapegoat)
-{
-    struct SG *head;
-    head=FlattenTree(scapegoat,NULL);
-    BuildHeightBalancedTree(size,head);
-    while(head->parent!=NULL)
+  
+    bool done = false;
+    int d = 0;
+    do
     {
-        head = head->parent;
-    }
-    return head;
-    
-}
-
-void insert(struct SG**t,int num)
-{
-    if(*t==NULL)
-    { 
-        t= (struct SG**)malloc(sizeof (struct SG));
-        (*t)->left  = NULL;
-        (*t)->value=num;
-        (*t)->right = NULL;
-        
-    }    
-    else{
-        if(num<(*t)->value)
-        insert(&((*t)->left),num);
-        else
-        insert(&((*t)->right),num);
-    }
-}
-
-void Insert(struct SG**t,int num)
-{
-    double s;
-    int h;
-    struct SG *scapegoat, *node;
-    insert(t,num);
-    s=(log(size(*t)))/(log(ph));
-    h=height(*t);
-    if (h==-1 )
-       printf("can not insert");
-    else if( h > s)
-    {
-        node=search(*t,num);
-        scapegoat=FindScapegoat(node);
-        RebuildTree(size(*t), scapegoat);
-    }
-}
-
-
-int locate ( struct SG *root, int num, struct SG **par,struct SG*x)
-{
-    struct SG*q;
-    q = root; 
-    *par = NULL;
-
-    while ( q != NULL)
-    {
-        if ( q->value == num)
+        if (u->value < w->value)
         {
-            x = q;
-            return 1; 
-            
+            if (w->left == NULL)
+            {
+                w->left = u;
+                u->parent = w;
+                done = true;
+            }
+            else
+                w = w->left;
         }
-        *par =q;
-        if (q->value > num)
-        q = q->left;
+        else if (u->value > w->value)
+        {
+            if (w->right == NULL)
+            {
+                w->right = u;
+                u->parent = w;
+                done = true;
+            }
+            else
+                w = w->right;
+        }
         else
-        q = q->right;
+            return -1;
+        d++;
     }
+    while (!done);
+  
+    n++;
+    return d;
 }
 
-int del( struct SG **root, int num) 
+int SGTree::search (float y)
 {
-    int found;
-    struct SG *parent, *x, *xsucc;
-    if ( *root == NULL)
-    { 
-        printf ("Tree is empty\n"); 
-        return 0; 
-        
-    }
-    parent = x = NULL;
-    found=locate (*root, num, &parent, x );
-    if ( found!=1)
-    { 
-        printf ("\nNode to be deleted not found\n");
-        return 0;; 
-        
-    }
-    if ( x->left != NULL && x->right != NULL)
+    Node *w = root;
+    while (1)
     {
+        if (w == NULL)
+	    {
+	        printf ("not found\n");
+	        return 0;
+	    }
+        if (w->value == y)
+	    {
+	        printf ("found\n");
+	        return 1;
+	    }
+        if (w->value < y)
+	    w = w->right;
+        if (w->value > y)
+	    w = w->left;
+    } 
+}
 
-        parent = x; 
-        xsucc = x->right ;
+Node* minValueNode(Node* node)
+{
+    Node* current = node;
+ 
+    while (current && current->left != NULL)
+        current = current->left;
+ 
+    return current;
+}
 
-        while ( xsucc->left != NULL) 
-        { 
-            parent = xsucc;
-            xsucc = xsucc->left;
+Node*SGTree::delet(float z)
+{
+    Node* curr = root;
+    Node* prev = NULL;
+ 
+    while (curr != NULL && curr->value != z) {
+        prev = curr;
+        if (z < curr->value)
+            curr = curr->left;
+        else
+            curr = curr->right;
+    }
+ 
+    if (curr == NULL) {
+        cout << "Key " << z << " not found in the"
+             << " provided BST.\n";
+        return root;
+    }
+ 
+    if (curr->left == NULL || curr->right == NULL) {
+ 
+        Node* newCurr;
+ 
+        if (curr->left == NULL)
+            newCurr = curr->right;
+        else
+            newCurr = curr->left;
+ 
+        if (prev == NULL)
+            return newCurr;
+ 
+        if (curr == prev->left)
+            prev->left = newCurr;
+        else
+            prev->right = newCurr;
+ 
+        free(curr);
+    }
+ 
+    else {
+        Node* p = NULL;
+        Node* temp;
+ 
+        temp = curr->right;
+        while (temp->left != NULL) {
+            p = temp;
+            temp = temp->left;
         }
-
-        x->value = xsucc->value ; 
-        x = xsucc;
+ 
+        if (p != NULL)
+            p->left = temp->right;
+ 
+        else
+            curr->right = temp->right;
+ 
+        curr->value = temp->value;
+        free(temp);
     }
-    if ( x->left == NULL && x->right == NULL)
-    {
-        if ( parent->right == x) 
-        parent->right = NULL; 
-        else 
-        parent->left = NULL;
-        free (x); 
-        return 1;
-    }
-
-    if ( x->left == NULL && x->right != NULL)
-    {
-        if ( parent->left == x) 
-        parent->left = x->right; 
-        else 
-        parent->right = x->right;
-        free ( x);
-        return 1;
-    }
-
-    if ( x->left != NULL && x->right == NULL)
-    {
-        if ( parent->left == x) 
-        parent->left = x->left; 
-        else 
-        parent->right = x->left;
-        free (x); 
-        return 1;
-    }
+    return root;
 }
-void Delete(struct SG **root, int num)
+
+int main ()
 {
-    int k;
-    k=del(root, num);
-    if(k)
-    {
-      if (size(*root)< (ph*maxSize))
-        RebuildTree(size(*root),*root);
-    }
-}
-int main()
-{
-    struct SG *bt, *s;
-    int d;
+    float d;
+    int s;
     char ch;
-    while(1)
-    { 
-        printf("Enter a balance factor:");
-        scanf("%d",&ph);
-        printf("Enter a max size of the tree:");
-        scanf("%d",&maxSize);
-        printf("i) Insert :\ns) search :\np) delete:\nq) Quit:\nEnter char:");
-        scanf("%s",&ch);
-        switch(ch)
-        {
-            case 'i':
-            printf("Enter a data to insert:");
-            scanf("%d",&d);
-            Insert(&bt,d);
-            break;
+    SGTree sgt;
+    while (1)
+    {
+        printf ("i) Insert :\ns) search :\nd) delete:\np)print inorder\nq) Quit:\nEnter char:");
+        scanf ("%s", &ch);
+        switch (ch)
+	    {
+	        case 'i':
+                printf("Enter a data to insert:");
+                scanf("%f",&d);
+                sgt.insert(d);
+                break;
             case 's':
-            printf("Enter data you want to search:");
-            scanf("%d",&d);
-            s=search(bt,d);
-            break;
+                printf("Enter data you want to search:");
+                scanf("%f",&d);
+                s=sgt.search(d);
+                break;
             case 'd':
-            printf("Enter data you want to delete:");
-            scanf("%d",&d);
-            Delete(&bt,d);
-            break;
+                printf("Enter data you want to delete:");
+                scanf("%f",&d);
+                sgt.delet(d);
+                break;
+            case 'p':
+                sgt.inorder();
             case'q':
-            exit(0);
-        }
+                exit(0);
+	    }
     }
 }
-
