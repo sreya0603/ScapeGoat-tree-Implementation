@@ -40,27 +40,27 @@ private:
     Node * root;
     int n;
 public:
-    void inorder (Node *);
+    void preorder (Node *);
     int size (Node *);
     bool insert (float x);
-    void rebuildTree (Node * u);
+    void rebuild (Node * u);
     SGTree ()       { root = NULL; n = 0; }
-    void inorder () { inorder (root); }
+    void preorder () { preorder (root); }
 
-    Node *buildBalancedFromArray (Node ** a, int i, int n);
-
-    int BSTInsertAndFindDepth (Node * u);
+    Node *Balancedtree (Node ** a, int i, int n);
+    int BSTdelet(float z);
+    int BSTInsert (Node * u);
     int search (float y);
     Node *delet (float z);
 };
 
-void SGTree::inorder (Node * node)
+void SGTree::preorder(Node *node)
 {
     if (node != NULL)
     {
-        inorder (node->left);
         cout << node->value << " ";
-        inorder (node->right);
+        preorder(node -> left);
+        preorder(node -> right);
     }
 }
 
@@ -75,20 +75,20 @@ bool SGTree::insert(float x)
 {
     Node *node = new Node(x);
   
-    int h = BSTInsertAndFindDepth(node);
+    int h = BSTInsert(node);
   
     if (h > log32(n))
     {
         Node *p = node->parent;
         while (3*size(p) <= 2*size(p->parent))
             p = p->parent;
-        rebuildTree(p->parent);
+        rebuild(p->parent);
     }
 
     return h >= 0;
 }
 
-void SGTree::rebuildTree(Node *u)
+void SGTree::rebuild(Node *u)
 {
     int n = size(u);
     Node *p = u->parent;
@@ -96,41 +96,41 @@ void SGTree::rebuildTree(Node *u)
     storeInArray(u, a, 0);
     if (p == NULL)
     {
-        root = buildBalancedFromArray(a, 0, n);
+        root = Balancedtree(a, 0, n);
         root->parent = NULL;
     }
     else if (p->right == u)
     {
-        p->right = buildBalancedFromArray(a, 0, n);
+        p->right = Balancedtree(a, 0, n);
         p->right->parent = p;
     }
     else
     {
-        p->left = buildBalancedFromArray(a, 0, n);
+        p->left = Balancedtree(a, 0, n);
         p->left->parent = p;
     }
 }
 
-Node * SGTree::buildBalancedFromArray(Node **a,int i, int n)
+Node * SGTree::Balancedtree(Node **a,int i, int n)
 {
     if (n== 0)
         return NULL;
     int m = n / 2;
   
-    a[i+m]->left = buildBalancedFromArray(a, i, m);
+    a[i+m]->left = Balancedtree(a, i, m);
   
     if (a[i+m]->left != NULL)
         a[i+m]->left->parent = a[i+m];
   
     a[i+m]->right =
-         buildBalancedFromArray(a, i+m+1, n-m-1);
+         Balancedtree(a, i+m+1, n-m-1);
     if (a[i+m]->right != NULL)
         a[i+m]->right->parent = a[i+m];
   
     return a[i+m];
 }
 
-int SGTree::BSTInsertAndFindDepth(Node *u)
+int SGTree::BSTInsert(Node *u)
 {
     Node *w = root;
     if (w == NULL)
@@ -198,21 +198,10 @@ int SGTree::search (float y)
     } 
 }
 
-Node* minValueNode(Node* node)
-{
-    Node* current = node;
- 
-    while (current && current->left != NULL)
-        current = current->left;
- 
-    return current;
-}
-
-Node*SGTree::delet(float z)
+int SGTree::BSTdelet(float z)
 {
     Node* curr = root;
     Node* prev = NULL;
- 
     while (curr != NULL && curr->value != z) {
         prev = curr;
         if (z < curr->value)
@@ -224,7 +213,7 @@ Node*SGTree::delet(float z)
     if (curr == NULL) {
         cout << "Key " << z << " not found in the"
              << " provided BST.\n";
-        return root;
+        return 0;
     }
  
     if (curr->left == NULL || curr->right == NULL) {
@@ -237,16 +226,14 @@ Node*SGTree::delet(float z)
             newCurr = curr->left;
  
         if (prev == NULL)
-            return newCurr;
+            return 1;
  
         if (curr == prev->left)
             prev->left = newCurr;
         else
             prev->right = newCurr;
- 
         free(curr);
     }
- 
     else {
         Node* p = NULL;
         Node* temp;
@@ -266,6 +253,17 @@ Node*SGTree::delet(float z)
         curr->value = temp->value;
         free(temp);
     }
+    return 1;
+}
+
+Node*SGTree::delet(float z)
+{
+    int h=BSTdelet(z);
+    if(h)
+    {
+      if (3*size(root)< 2*(8))
+        rebuild(root);
+    }
     return root;
 }
 
@@ -277,7 +275,7 @@ int main ()
     SGTree sgt;
     while (1)
     {
-        printf ("i) Insert :\ns) search :\nd) delete:\np)print inorder\nq) Quit:\nEnter char:");
+        printf ("i) Insert :\ns) search :\nd) delete:\np) print preorder\nq) Quit:\nEnter char:");
         scanf ("%s", &ch);
         switch (ch)
 	    {
@@ -297,9 +295,11 @@ int main ()
                 sgt.delet(d);
                 break;
             case 'p':
-                sgt.inorder();
+                sgt.preorder();
+                break;
             case'q':
                 exit(0);
 	    }
     }
 }
+
