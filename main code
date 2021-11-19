@@ -1,5 +1,9 @@
-#include<bits/stdc++.h>
-using namespace std;
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#include<stdbool.h>
+
+int n=0;
 
 static int const log32 (int n)
 {
@@ -7,24 +11,14 @@ static int const log32 (int n)
     return (int) ceil (log23 * log (n));
 }
 
-class Node
+struct SG
 {
-public:
-    Node * left, *right, *parent;
-    float value;
-    Node ()
-    {
-        value = 0;
-        left = right = parent = NULL;
-    }
-    Node (float v)
-    {
-        value = v;
-        left = right = parent = NULL;
-    }
+    int value;
+    struct SG *right,*left,*parent;
 };
+struct SG*root;
 
-int storeInArray (Node * ptr, Node * arr[], int i)
+int storeInArray (struct SG * ptr,struct SG * arr[], int i)
 {
     if (ptr == NULL)
         return i;
@@ -34,84 +28,24 @@ int storeInArray (Node * ptr, Node * arr[], int i)
     return storeInArray (ptr->right, arr, i);
 }
 
-class SGTree
-{
-private:
-    Node * root;
-    int n;
-public:
-    void preorder (Node *);
-    int size (Node *);
-    bool insert (float x);
-    void rebuild (Node * u);
-    SGTree ()       { root = NULL; n = 0; }
-    void preorder () { preorder (root); }
-
-    Node *Balancedtree (Node ** a, int i, int n);
-    int BSTdelet(float z);
-    int BSTInsert (Node * u);
-    int search (float y);
-    Node *delet (float z);
-};
-
-void SGTree::preorder(Node *node)
+void preorder(struct SG*node)
 {
     if (node != NULL)
     {
-        cout << node->value << " ";
+        printf("%d ",node->value);
         preorder(node -> left);
         preorder(node -> right);
     }
 }
 
-int SGTree::size (Node * node)
+int size (struct SG * node)
 {
     if (node == NULL)
         return 0;
     return 1 + size (node->left) + size (node->right);
 }
 
-bool SGTree::insert(float x)
-{
-    Node *node = new Node(x);
-  
-    int h = BSTInsert(node);
-  
-    if (h > log32(n))
-    {
-        Node *p = node->parent;
-        while (3*size(p) <= 2*size(p->parent))
-            p = p->parent;
-        rebuild(p->parent);
-    }
-
-    return h >= 0;
-}
-
-void SGTree::rebuild(Node *u)
-{
-    int n = size(u);
-    Node *p = u->parent;
-    Node **a = new Node* [n];
-    storeInArray(u, a, 0);
-    if (p == NULL)
-    {
-        root = Balancedtree(a, 0, n);
-        root->parent = NULL;
-    }
-    else if (p->right == u)
-    {
-        p->right = Balancedtree(a, 0, n);
-        p->right->parent = p;
-    }
-    else
-    {
-        p->left = Balancedtree(a, 0, n);
-        p->left->parent = p;
-    }
-}
-
-Node * SGTree::Balancedtree(Node **a,int i, int n)
+struct SG * Balancedtree(struct SG **a,int i, int n)
 {
     if (n== 0)
         return NULL;
@@ -130,9 +64,33 @@ Node * SGTree::Balancedtree(Node **a,int i, int n)
     return a[i+m];
 }
 
-int SGTree::BSTInsert(Node *u)
+void rebuild(struct SG *u)
 {
-    Node *w = root;
+    int n = size(u);
+    struct SG *p = u->parent;
+    struct SG **a;
+    *a= (struct SG*)malloc(n*sizeof (struct SG));
+    storeInArray(u, a, 0);
+    if (p == NULL)
+    {
+        u = Balancedtree(a, 0, n);
+        u->parent = NULL;
+    }
+    else if (p->right == u)
+    {
+        p->right = Balancedtree(a, 0, n);
+        p->right->parent = p;
+    }
+    else
+    {
+        p->left = Balancedtree(a, 0, n);
+        p->left->parent = p;
+    }
+}
+
+int BSTInsert(struct SG *u)
+{printf("hi");
+    struct SG *w = root;
     if (w == NULL)
     {
         root = u;
@@ -176,9 +134,30 @@ int SGTree::BSTInsert(Node *u)
     return d;
 }
 
-int SGTree::search (float y)
+bool insert(float x)
 {
-    Node *w = root;
+    struct SG*node=(struct SG*)malloc(sizeof(struct SG));
+    node->value=x;
+    node->left=NULL;
+    node->right=NULL;
+    node->parent=NULL;
+    
+    int h=BSTInsert(node);
+  
+    if (h > log32(n))
+    {
+        struct SG *p = node->parent;
+        while (3*size(p) <= 2*size(p->parent))
+            p = p->parent;
+        rebuild(p->parent);
+    }
+
+    return h >= 0;
+}
+
+int search (float y)
+{
+    struct SG *w = root;
     while (1)
     {
         if (w == NULL)
@@ -198,10 +177,10 @@ int SGTree::search (float y)
     } 
 }
 
-int SGTree::BSTdelet(float z)
+int BSTdelet(float z)
 {
-    Node* curr = root;
-    Node* prev = NULL;
+    struct SG* curr = root;
+    struct SG* prev = NULL;
     while (curr != NULL && curr->value != z) {
         prev = curr;
         if (z < curr->value)
@@ -211,14 +190,13 @@ int SGTree::BSTdelet(float z)
     }
  
     if (curr == NULL) {
-        cout << "Key " << z << " not found in the"
-             << " provided BST.\n";
+        printf("key %f not found in the provided tree\n",z);
         return 0;
     }
  
     if (curr->left == NULL || curr->right == NULL) {
  
-        Node* newCurr;
+        struct SG* newCurr;
  
         if (curr->left == NULL)
             newCurr = curr->right;
@@ -235,8 +213,8 @@ int SGTree::BSTdelet(float z)
         free(curr);
     }
     else {
-        Node* p = NULL;
-        Node* temp;
+        struct SG* p = NULL;
+        struct SG* temp;
  
         temp = curr->right;
         while (temp->left != NULL) {
@@ -256,7 +234,7 @@ int SGTree::BSTdelet(float z)
     return 1;
 }
 
-Node*SGTree::delet(float z)
+struct SG* delet(float z)
 {
     int h=BSTdelet(z);
     if(h)
@@ -272,7 +250,6 @@ int main ()
     float d;
     int s;
     char ch;
-    SGTree sgt;
     while (1)
     {
         printf ("i) Insert :\ns) search :\nd) delete:\np) print preorder\nq) Quit:\nEnter char:");
@@ -282,24 +259,23 @@ int main ()
 	        case 'i':
                 printf("Enter a data to insert:");
                 scanf("%f",&d);
-                sgt.insert(d);
+                insert(d);
                 break;
             case 's':
                 printf("Enter data you want to search:");
                 scanf("%f",&d);
-                s=sgt.search(d);
+                s=search(d);
                 break;
             case 'd':
                 printf("Enter data you want to delete:");
                 scanf("%f",&d);
-                sgt.delet(d);
+                delet(d);
                 break;
             case 'p':
-                sgt.preorder();
+                preorder(root);
                 break;
             case'q':
                 exit(0);
 	    }
     }
 }
-
