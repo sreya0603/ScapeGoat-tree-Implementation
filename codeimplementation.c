@@ -45,11 +45,11 @@ int size (struct SG * node)
     return 1 + size (node->left) + size (node->right);
 }
 
-struct SG * Balancedtree(struct SG **a,int i, int ns)
+struct SG * Balancedtree(struct SG **a,int i, int n)
 {
-    if (ns== 0)
+    if (n== 0)
         return NULL;
-    int m = ns / 2;
+    int m = n / 2;
   
     a[i+m]->left = Balancedtree(a, i, m);
   
@@ -66,26 +66,26 @@ struct SG * Balancedtree(struct SG **a,int i, int ns)
 
 void rebuild(struct SG *u)
 {
-    int ns = size(u);
+    int n = size(u);
     struct SG *p;
     p = u->parent;
     //printf("\nhi\n");
     struct SG **a;
-    a= (struct SG**)malloc(ns*sizeof (struct SG*));
+    a= (struct SG**)malloc(n*sizeof (struct SG*));
     storeInArray(u, a, 0);
     if (p == NULL)
     {
-        u = Balancedtree(a, 0, ns);
+        u = Balancedtree(a, 0, n);
         u->parent = NULL;
     }
     else if (p->right == u)
     {
-        p->right = Balancedtree(a, 0, ns);
+        p->right = Balancedtree(a, 0, n);
         p->right->parent = p;
     }
     else
     {
-        p->left = Balancedtree(a, 0, ns);
+        p->left = Balancedtree(a, 0, n);
         p->left->parent = p;
     }
 }
@@ -291,3 +291,4 @@ int main ()
 	    }
     }
 }
+
