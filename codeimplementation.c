@@ -5,10 +5,10 @@
 
 int n=0,q=0;
 
-static double const log32 (int n)
+static int const log32 (int n)
 {
-    double const log23 = 2.4663034623764317;
-    return (log23 * log (n));
+    int const log23 = 2.4663034623764317;
+    return (int) ceil(log23 * log (n));
 }
 
 struct SG
@@ -145,7 +145,7 @@ bool insert(float x)
     node->left=NULL;
     node->right=NULL;
     node->parent=NULL;
-    double h=BSTInsert(node);
+    int h=BSTInsert(node);
     //printf("\n%lf,%lf\n",h,log32(q));
     
     if (h > log32(q))
@@ -261,7 +261,7 @@ int main ()
     char ch;
     while (1)
     {
-        printf ("i) Insert :\ns) search :\nd) delete:\np) print preorder\nr) rebuild\nq) Quit:\nEnter char:");
+        printf ("i) Insert :\ns) search :\nd) delete:\np) print preorder\nq) Quit:\nEnter char:");
         scanf ("%s", &ch);
         switch (ch)
 	    {
@@ -291,4 +291,3 @@ int main ()
 	    }
     }
 }
-
